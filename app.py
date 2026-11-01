@@ -56,6 +56,38 @@ with recognize:
             figure.tight_layout()
             show_figure(figure)
         st.caption('fit() learns from training labels; predict() uses those weights on unseen test examples. This is not a neural network.')
+        st.subheader('Inspect a confusion-matrix cell')
+        st.write('Choose a row (actual digit) and column (predicted digit) to see the exact held-out images counted in that cell.')
+        actual_column, predicted_column = st.columns(2)
+        with actual_column:
+            actual_digit = st.selectbox('Actual digit (row)', range(10), key='actual_digit')
+        with predicted_column:
+            predicted_digit = st.selectbox('Predicted digit (column)', range(10), key='predicted_digit')
+        matches = np.flatnonzero(
+            (result.test_labels == actual_digit) & (result.predictions == predicted_digit))
+        st.write(f'Row {actual_digit}, column {predicted_digit}: **{len(matches)} held-out images**.')
+        st.caption('Different digits indicate errors; matching digits indicate correct predictions. Sample indices refer to the held-out slider above.')
+        if len(matches) == 0:
+            st.info('No held-out images match this cell. Choose another actual/predicted pair.')
+        else:
+            st.dataframe({
+                'Held-out sample index': matches,
+                'Dataset index': result.test_indices[matches],
+                'Actual digit': result.test_labels[matches],
+                'Predicted digit': result.predictions[matches],
+            }, hide_index=True)
+            # A previously selected sample may not belong to the new cell.
+            if st.session_state.get('matching_sample') not in matches:
+                st.session_state['matching_sample'] = int(matches[0])
+            matching_sample = st.selectbox('View matching held-out sample',
+                                          [int(index) for index in matches], key='matching_sample')
+            figure, axis = plt.subplots(figsize=(3, 3))
+            axis.imshow(result.test_features[matching_sample].reshape(8, 8),
+                        cmap='gray', vmin=0, vmax=1, interpolation='nearest')
+            axis.set_title(f'Sample {matching_sample}: actual {actual_digit}, predicted {predicted_digit}')
+            axis.axis('off')
+            show_figure(figure)
+
 
 with group:
     st.header('Find visual groups without labels')

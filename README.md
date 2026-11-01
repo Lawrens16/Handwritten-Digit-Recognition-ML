@@ -2,18 +2,103 @@
 
 A local Streamlit lab demonstrating Logistic Regression, K-Means, and tabular Q-Learning. The approved scope is in `plans/From_Digits_to_Decisions_Project_Plan.md`.
 
-## Windows setup
+## Developer setup (Windows / PowerShell)
 
-Tested on Windows with Python 3.13.7. From the project folder in PowerShell:
+Prerequisites: Git and Python. Tested on Windows with Python **3.13.7**; other Python versions and platforms have not been verified. No CUDA, API keys, database, or separate ML server is required.
+
+Clone the project and create a virtual environment inside it:
 
 ```powershell
+git clone https://github.com/Lawrens16/Handwritten-Digit-Recognition-ML.git
+cd Handwritten-Digit-Recognition-ML
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-python -m streamlit run app.py
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-If activation is restricted, use `.\.venv\Scripts\python.exe` in place of `python`; no execution-policy change is needed. Open the local URL printed by Streamlit. Stop with Ctrl+C. After dependency installation, no data downloads or online services are needed. Do not enable Streamlit's optional sharing/deployment features for the local demo.
+Open **http://localhost:8501**, or the URL printed by Streamlit. Keep the terminal running; press **Ctrl+C** to stop. These commands use the project environment explicitly, so activation and execution-policy changes are unnecessary. Do not copy someone else's `.venv`; create your own.
+
+For future runs, open PowerShell in the project root and run:
+
+```powershell
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+## Dataset setup: where to get it and where to put it
+
+**No manual dataset download or copying is required to run the app.** Installing the requirements installs scikit-learn, which bundles the Digits dataset. The app calls `load_digits()` to read it locally. After dependency installation, loading the dataset does not require internet access, including on the first run.
+
+The dataset contains **1,797 images**, each **8×8 pixels**, with intensities **0–16** and labels **0–9**. It is not MNIST. Source: [scikit-learn Digits documentation](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_digits.html).
+
+Verify that it is installed:
+
+```powershell
+.\.venv\Scripts\python.exe -c "from sklearn.datasets import load_digits; print(load_digits().images.shape)"
+```
+
+Expected output: `(1797, 8, 8)`.
+
+### Optional viewable images
+
+The `dataset/` folder is ignored by Git, so it will **not** appear in a fresh clone. It contains optional visual exports; the app does not load training data from it.
+
+If a teammate shares the exported folder, paste the **whole `dataset` folder directly into the project root**, beside `app.py`:
+
+```text
+Handwritten-Digit-Recognition-ML/
+    app.py
+    requirements.txt
+    dataset/
+        0/              # Images labeled 0
+        1/              # Images labeled 1
+        ...
+        9/              # Images labeled 9
+        index.csv       # Dataset index, label, image path
+        pixels.csv      # Original pixel intensities
+        overview.png    # Gallery
+        README.md
+```
+
+Alternatively, generate your own PNGs and index with this entire PowerShell block, run from the project root after installing requirements. It creates/replaces the generated PNGs and `index.csv`:
+
+```powershell
+@'
+from pathlib import Path
+import csv
+import numpy as np
+from PIL import Image
+from sklearn.datasets import load_digits
+
+root = Path("dataset")
+digits = load_digits()
+root.mkdir(exist_ok=True)
+with (root / "index.csv").open("w", newline="", encoding="utf-8") as output:
+    writer = csv.writer(output)
+    writer.writerow(["dataset_index", "actual_digit", "image_path"])
+    for index, (pixels, label) in enumerate(zip(digits.images, digits.target)):
+        (root / str(int(label))).mkdir(exist_ok=True)
+        relative = f"{int(label)}/digit_{index:04d}.png"
+        grayscale = np.rint(pixels * 255 / 16).astype(np.uint8)
+        image = Image.fromarray(grayscale)
+        image.resize((256, 256), Image.Resampling.NEAREST).save(root / relative)
+        writer.writerow([index, int(label), relative])
+print("Exported 1,797 PNG images and dataset/index.csv")
+'@ | .\.venv\Scripts\python.exe -
+```
+
+Pillow (`PIL`) is already installed through Streamlit. This minimal export creates the ten image folders and `index.csv`; the gallery, original-pixel CSV, and export README are extras in the full shared export.
+
+The PNGs are enlarged for viewing; no image detail is added. `digit_0042.png` means **original dataset index 42**, not held-out sample index 42. The app inspector shows the original dataset index for matching.
+
+Changing or deleting these exported images does not affect training. Pasting MNIST, paper photos, or arbitrary images into this folder does not make the app recognize them; supporting those inputs requires preprocessing and training changes.
+
+## Troubleshooting
+
+- **Python is not recognized:** install Python 3.13 with its PATH option enabled, then reopen PowerShell.
+- **No module named streamlit:** use the `.venv` Python executable for both installation and running, as shown above.
+- **Cannot find app.py or requirements.txt:** change into the cloned project root first.
+- **Port 8501 is busy:** append `--server.port 8502` to the run command and open the printed URL.
+- **No dataset folder after cloning:** this is expected. The app uses bundled data; the optional export above creates viewable PNGs.
 
 ## Using the application
 
@@ -22,6 +107,10 @@ Each tab has one training button. Before training, it explains what to do. Click
 - **Recognize:** normalize pixels by 16, stratify an 80/20 split with seed 42, fit Logistic Regression only on training rows, inspect a test image, prediction, actual label, and confusion matrix.
 - **Group:** K-Means with ten centers, ten initializations and seed 42 receives normalized vectors only. Inspect centers, counts, and up to ten members. Cluster identifiers are not digit predictions. Silhouette is not accuracy.
 - **Navigate:** the fixed deterministic 4×4 FrozenLake map is a separate task. Q-Learning uses alpha 0.1, gamma 0.95, 10,000 episodes, and a 100-step cap. Epsilon starts at 1 and decays by 0.999 to a minimum of 0.05. True terminal updates omit future values; time-limit updates bootstrap. Evaluation freezes the greedy policy for 100 episodes. The route comes from actual environment transitions; loops and failures are reported.
+
+Below the confusion matrix, select an actual digit (row) and predicted digit (column) to list the matching held-out samples and original dataset indices. Select a matching sample to view its image. Off-diagonal cells are mistakes; diagonal cells are correct predictions. Empty cells show a message. These controls reuse the trained model.
+
+The 1,797 images are bundled with scikit-learn in `.venv/Lib/site-packages/sklearn/datasets/data/digits.csv.gz`. `load_digits()` reads this compressed numeric dataset; there are no separate image files to download.
 
 ## Measured results
 
@@ -42,13 +131,13 @@ The learned route in this run was 0 → 4 → 8 → 9 → 13 → 14 → 15. Thes
 ## Verification
 
 ```powershell
-python -m pip install -r requirements-dev.txt
-python -m pytest -q
-python -m compileall -q app.py supervised.py unsupervised.py reinforcement.py
-python -m pip check
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest -q
+.\.venv\Scripts\python.exe -m compileall -q app.py supervised.py unsupervised.py reinforcement.py
+.\.venv\Scripts\python.exe -m pip check
 ```
 
-Five tests cover independently refitting the classifier on training rows (leakage), test normalization/metrics, actual nearest-center membership and counts, terminal/nonterminal updates, successful real navigation, unchanged evaluation table, loop reporting, and training/selection through Streamlit AppTest. No existing lint, formatter, or security tool configuration was supplied. Dependencies are pinned to the versions installed and exercised here.
+Six tests cover independently refitting the classifier on training rows (leakage), test normalization/metrics, actual nearest-center membership and counts, terminal/nonterminal updates, successful real navigation, unchanged evaluation table, loop reporting, training/selection through Streamlit AppTest, and confusion-cell filtering with empty-cell handling without retraining. No existing lint, formatter, or security tool configuration was supplied. Dependencies are pinned to the versions installed and exercised here.
 
 ## Presentation and limitations
 
@@ -67,3 +156,6 @@ The dataset is 1,797 built-in 8×8 digit images, not MNIST, arbitrary photos, or
 - [Streamlit session state](https://docs.streamlit.io/develop/api-reference/caching-and-state/st.session_state)
 
 The supplied plan references the instructor guidelines; that original PDF was not in this checkout. AI assisted implementation and testing; team members should review the code and follow the instructor's attribution rules.
+
+## Browse the exported dataset
+Open dataset/overview.png for a gallery, or dataset/0 through dataset/9 for individual images. All 1,797 PNGs are enlarged for viewing; dataset/index.csv maps filenames to original dataset indices, and dataset/pixels.csv preserves the original 64 pixel values. See dataset/README.md. The app continues to load the bundled data; exported images do not alter training.

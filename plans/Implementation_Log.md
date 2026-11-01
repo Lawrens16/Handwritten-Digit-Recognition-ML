@@ -12,3 +12,5 @@ Measured CPU: classifier 0.074s, clustering 0.162s, agent 0.797s; no CUDA needed
 Docs: README, DEMO, results.json, eight offline HTML slides. pip check and compileall passed; local health endpoint returned ok. Pinned requirements reinstall matched installed versions. Original environment was created fresh for this implementation; no second clean environment installation performed.
 
 Final browser capture: zero console errors, two chart extent warnings during chart mounting; verify chart visibly at rehearsal. All eight presentation sections loaded in browser. Screenshots saved in screenshots/. No network-disabled test; modules use bundled data and local environment. Human tasks: member names, rehearsal, submission channel/cutoff and submission.
+
+November 1: confusion-cell inspection approved by user. Added regression test first; observed missing-selectors assertion fail, implemented UI filtering and matching-image selector; six full-suite tests passed. Updated README, demo and baseline. Preserved preexisting reinforcement.py edits. Dataset file confirmed inside sklearn package: data/digits.csv.gz.

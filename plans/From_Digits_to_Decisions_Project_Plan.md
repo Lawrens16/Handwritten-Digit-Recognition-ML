@@ -155,3 +155,6 @@ Prepare answers to: Why is Logistic Regression supervised? Why not use classific
 - Q-Learning tutorial: https://gymnasium.farama.org/tutorials/training_agents/frozenlake_q_learning/
 
 Implementation settings and dates above are proposed team decisions, not additional instructor requirements. Exact performance and dependency versions must be established when the program is built.
+
+## Approved follow-up: confusion-cell inspection (November 1)
+User requested actual-digit and predicted-digit selectors beneath the confusion matrix. Show matching held-out sample indices, original dataset indices, and a selectable image with actual/predicted labels. Empty cells must show a clear message. Reuse the trained classifier without retraining. Verified with a failing-then-passing AppTest and six passing full-suite tests.

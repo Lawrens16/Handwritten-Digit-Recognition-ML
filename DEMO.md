@@ -1,7 +1,7 @@
 # Demo script (about five minutes)
 
 1. Start `python -m streamlit run app.py`. Explain that the digit dataset is built in and all learning runs locally.
-2. Recognize: click Train classifier. Explain that `fit` sees only training labels. Show test accuracy and the confusion matrix (rows actual, columns predicted). Select two held-out images. The actual label is shown beside the model prediction; acknowledge any mistake.
+2. Recognize: click Train classifier. Explain that `fit` sees only training labels. Show test accuracy and the confusion matrix (rows actual, columns predicted). Select two held-out images. The actual label is shown beside the model prediction; acknowledge any mistake. Below the matrix, select its actual-digit row and predicted-digit column to list the exact matching test samples, then select one to see its image. Empty cells have no matching images. This inspection does not retrain.
 3. Group: click Train clusters. Show ten learned center images and choose a cluster. Explain that these IDs are arbitrary and can mix digits. Member counts total 1,797. Silhouette measures cohesion/separation, not digit accuracy.
 4. Navigate: click Train agent. Explain 16 states, four actions, reward +1 only at the goal, and zero otherwise. Show the rolling training rate, route, and Q-table. Evaluation has no exploration or updates and repeats the same deterministic map.
 5. Contrast learning from labels, similarity without labels, and rewards through interaction. Explain that training occurs only on button clicks; selecting samples uses the existing model.
