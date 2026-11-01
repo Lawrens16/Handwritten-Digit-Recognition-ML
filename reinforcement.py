@@ -1,4 +1,3 @@
-"""Real tabular Q-learning on deterministic FrozenLake. Actions: L,D,R,U."""
 from dataclasses import dataclass
 from time import perf_counter
 
@@ -11,7 +10,6 @@ def make_environment():
 
 
 def update_q(q_table, state, action, reward, next_state, terminated):
-    # Time-limit truncation is not terminal: bootstrap unless truly terminated.
     target = reward if terminated else reward + .95 * np.max(q_table[next_state])
     q_table[state, action] += .1 * (target - q_table[state, action])
 
